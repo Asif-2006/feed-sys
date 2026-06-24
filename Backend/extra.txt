@@ -1,0 +1,15 @@
+app.post('/create-post',upload.single("image"),async (req,res)=>{
+    console.log("PUBLIC:", process.env.IMAGEKIT_PUBLIC_KEY);
+    console.log("PRIVATE:", process.env.IMAGEKIT_PRIVATE_KEY);
+    console.log("URL:", process.env.IMAGEKIT_URL_ENDPOINT);
+    const result = await uploadFile(req.file.buffer);
+    const post =  await postModel.create({
+        image : result.url,
+        Caption : req.body.Caption
+    })
+
+    return res.status(201).json({
+        message : "Post created successfully",
+        post
+    })
+})
