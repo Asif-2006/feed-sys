@@ -1,44 +1,40 @@
 const express = require('express');
-const multer = require('multer')
-const uploadFile = require('./services/storage.service')
-const postModel = require('./models/post.model')
 const cors = require('cors')
+const cookieParser = require("cookie-parser");
+const authRoutes = require('./routes/auth.routes')
+const postRoutes = require("./routes/post.routes");
+const blockedWordRoutes = require("./routes/blockedWord.routes");
 
 const app = express();
 app.use(cors())
 app.use(express.json())
+app.use(cookieParser())
 
-const upload = multer({ storage: multer.memoryStorage() })
-
-app.post('/create-post', upload.single("image"), async (req, res) => {
-    console.log(req.body);
-    const result = await uploadFile(req.file.buffer)
-
-    const post = await postModel.create({
-        image : result.url,
-        caption : req.body.caption
-    })
+/**
+ * - Authentication API's
+*/
+app.use('/api/auth', authRoutes);
 
 
-    return res.status(201).json({
-        message : "Post Created Successfully",
-        post
 
-    })
-    
-})
+/**
+ * - Posts API's
+*/
 
-
-app.get('/posts',async (req,res)=>{
-    const posts = await postModel.find()
+app.use("/api/posts", postRoutes);
 
 
-    return res.status(201).json({
-        message : "Post fetched Successfully",
-        posts
+/**
+ * - Blocked Words
+ */
 
-    })
-})
+
+app.use("/api/admin/blocked-words", blockedWordRoutes);
+
+
+
+
+
 
 
 

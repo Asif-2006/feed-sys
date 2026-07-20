@@ -3,20 +3,29 @@ require("dotenv").config();
 
 
 const imageKit = new ImageKit({
-    privateKey : process.env.IMAGEKIT_PRIVATE_KEY,
-
-
-})
+    publicKey: process.env.IMAGEKIT_PUBLIC_KEY,
+    privateKey: process.env.IMAGEKIT_PRIVATE_KEY,
+    urlEndpoint: process.env.IMAGEKIT_URL_ENDPOINT,
+});
 
 
 async function uploadFile(buffer) {
     const result = await imageKit.files.upload({
-        file:buffer.toString("base64"),
-        fileName: "image.jpg"
-    })
+        file: buffer.toString("base64"),
+        fileName: `${Date.now()}.jpg`,
+    });
 
-    return result;
+    return {
+        url: result.url,
+        fileId: result.fileId
+    };
 }
 
+async function deleteFile(fileId) {
+    await imageKit.files.delete(fileId);
+}
 
-module.exports = uploadFile;
+module.exports = {
+    uploadFile,
+    deleteFile
+};
