@@ -3,8 +3,8 @@ const nodemailer = require('nodemailer');
 
 const welcomeTemplate = require("../templates/welcome.template");
 const violationTemplate = require("../templates/violation.template");
-
-
+const blockTemplate = require("../templates/block.template");
+const unblockTemplate = require("../templates/unblock.template");
 
 
 
@@ -52,18 +52,44 @@ async function sendViolationEmail(user, violations) {
 
     try {
         await transporter.sendMail({
-        from: `"HexiNova Team" <${process.env.EMAIL_USER}>`,
-        to: user.email,
-        subject: "⚠ HexiNova Community Guidelines Violation",
-        html: violationTemplate(user.username, violations)
-    });
+            from: `"HexiNova Team" <${process.env.EMAIL_USER}>`,
+            to: user.email,
+            subject: "⚠ HexiNova Community Guidelines Violation",
+            html: violationTemplate(user.username, violations)
+        });
     } catch (err) {
         console.error("Failed to send welcome email:", err.message);
         throw err;
     }
 }
 
+
+async function sendBlockEmail(user, reason) {
+
+    await transporter.sendMail({
+        from: process.env.EMAIL_USER,
+        to: user.email,
+        subject: "Your HexiNova Account Has Been Blocked",
+        html: blockTemplate(user.username, reason)
+    });
+
+}
+
+
+async function sendUnblockEmail(user) {
+
+    await transporter.sendMail({
+        from: process.env.EMAIL_USER,
+        to: user.email,
+        subject: "Your HexiNova Account Has Been Restored",
+        html: unblockTemplate(user.username)
+    });
+
+}
+
 module.exports = {
     sendWelcomeEmail,
-    sendViolationEmail
+    sendViolationEmail,
+    sendBlockEmail,
+    sendUnblockEmail
 };
