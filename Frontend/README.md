@@ -1,16 +1,99 @@
-# React + Vite
+# HexiNova — Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A React frontend built strictly against the API contract you provided. Nothing beyond that
+contract is implemented — no likes, comments, follow, chat, notifications, stories, dashboard
+stats, profile editing, or search.
 
-Currently, two official plugins are available:
+## Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- React 19 + Vite
+- React Router DOM v7 (declarative `<Routes>`/`<Route>` API)
+- Axios, `withCredentials: true`, cookie-only auth (no JWT in localStorage)
+- Context API (no Redux)
+- Tailwind CSS, dark theme
 
-## React Compiler
+## Getting started
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+```bash
+npm install
+cp .env.example .env   # VITE_API_BASE_URL defaults to http://localhost:3000/api
+npm run dev
+```
 
-## Expanding the ESLint configuration
+## What's implemented, and exactly against which endpoint
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+| Feature | Endpoint | Page / component |
+|---|---|---|
+| Register | `POST /auth/register` | `pages/Register.jsx` |
+| Login (sets httpOnly cookie) | `POST /auth/login` | `pages/Login.jsx` — redirects to `/feed` on success |
+| Logout | `POST /auth/logout` | `components/Navbar` |
+| Session check | `GET /auth/me` | `context/AuthContext.jsx` (drives `ProtectedRoute`/`AdminRoute`) |
+| List posts | `GET /posts` | `pages/Feed.jsx` at `/feed` |
+| Create post (`caption`, `image`) | `POST /posts` (multipart) | `components/CreatePostModal` |
+| Delete post | `DELETE /posts/:id` | `components/PostCard` (own posts only) |
+| Block user | `PATCH /admin/user/block/:id` | `pages/AdminUsers.jsx` |
+| Unblock user | `PATCH /admin/user/unblock/:id` | `pages/AdminUsers.jsx` |
+| List blocked words | `GET /admin/blocked-words` | `pages/AdminBlockedWords.jsx` |
+| Add blocked word | `POST /admin/blocked-words` | `pages/AdminBlockedWords.jsx` |
+| Remove blocked word | `DELETE /admin/blocked-words/:id` | `pages/AdminBlockedWords.jsx` |
+
+## Routing
+
+| Path | Access | Page |
+|---|---|---|
+| `/` | Public | Home — animated intro/landing page, no login required |
+| `/login`, `/register` | Public | Auth |
+| `/feed` | Authenticated | The posts feed (create/view/delete own posts) |
+| `/admin/users` | Admin only | Block/unblock by user ID |
+| `/admin/blocked-words` | Admin only | Blocked-word CRUD |
+| `*` | Public | 404 |
+
+Clicking the HexiNova logo/name always goes to `/` (the public intro page). After a successful
+login, users are redirected to `/feed`; the navbar also has a persistent "Feed" link once
+authenticated.
+
+## Known gap (flagged with a `TODO` in code)
+
+Your contract doesn't include a "list users" endpoint (e.g. `GET /admin/users`). Because of
+that, `pages/AdminUsers.jsx` can only block/unblock a user by manually entering their `_id` —
+there's no searchable table. See the `TODO` comment at the top of that file and in
+`api/admin.api.js`. Wire it up to a real listing endpoint once one exists.
+
+## Explicitly NOT implemented
+
+Per your spec, none of the following exist anywhere in this codebase, since no endpoint was
+provided for them: likes, comments, follow/unfollow, chat, notifications, stories, admin
+dashboard statistics, profile editing, and search.
+
+## Field names (matched exactly, no assumptions)
+
+- Post image: `image` (not `imageUrl`)
+- Post image file reference: `imageFileId` (received from the API, not currently rendered —
+  it's an ImageKit reference, not a display field)
+- Author avatar: `profilePicture` (not `avatarUrl`)
+- Author display name: `fullName`, falling back to `username` when empty
+  (`utils/helpers.js` → `getAuthorDisplayName`)
+
+## Design system
+
+Dark theme using your exact palette:
+
+- Background `#0F172A`, cards `#1E293B`, border `#334155`
+- Primary `#3B82F6`, accent `#06B6D4`, success `#22C55E`, danger `#EF4444`
+- Rounded corners, smooth transitions, mobile-first responsive layout
+- Post images use a responsive aspect ratio (no fixed giant heights) so cards resize cleanly
+  across desktop, tablet, and mobile
+
+## Project structure
+
+```
+src/
+  api/            axiosInstance.js + auth.api.js, post.api.js, admin.api.js
+  components/     one folder per reusable component
+  context/        AuthContext (backed by GET /auth/me), ToastContext (client-side UI feedback)
+  hooks/          useAuth, useToast
+  layouts/        MainLayout, AdminLayout
+  pages/          Login, Register, Feed, AdminUsers, AdminBlockedWords, NotFound
+  routes/         ProtectedRoute, AdminRoute
+  utils/          constants.js, helpers.js
+```

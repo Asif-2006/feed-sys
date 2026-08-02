@@ -1,69 +1,96 @@
-import React, { useState, useEffect } from 'react'
-import axios from "axios"
+import { useEffect, useState } from "react";
+import Button from "../components/Button/Button";
+import PostCard from "../components/PostCard/PostCard";
+import CreatePostModal from "../components/CreatePostModal/CreatePostModal";
+import Loader from "../components/Loader/Loader";
+import { createPost, deletePost, getPosts } from "../api/post.api";
+import { useToast } from "../hooks/useToast";
 
+export default function Feed() {
+  const toast = useToast();
+  const [posts, setPosts] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-const Feed = () => {
+  const loadPosts = async () => {
+    setIsLoading(true);
+    try {
+      const { data } = await getPosts();
+      setPosts(data?.posts ?? []);
+    } catch {
+      toast.error("Couldn't load the feed. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-    const [posts, setPosts] = useState([
-        {
-            _id: "1",
-            image: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80",
-            caption: "Beautiful scenery",
-        }
-    ])
+  useEffect(() => {
+    loadPosts();
+  }, []);
 
-    useEffect(() => {
+  const handleCreatePost = async ({ caption, image }) => {
+    setIsSubmitting(true);
+    try {
+      const formData = new FormData();
+      formData.append("caption", caption);
+      if (image) formData.append("image", image);
+      await createPost(formData);
+      setIsModalOpen(false);
+      toast.success("Post published");
+      // Re-fetch rather than assuming the response shape of a single
+      // created post, since only GET /posts' shape was documented.
+      loadPosts();
+    } catch (err) {
+      toast.error(err?.response?.data?.message || "Couldn't publish this post.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
-        axios.get(`${import.meta.env.VITE_API_URL}/posts`)
-            .then((res) => {
+  const handleDelete = async (postId) => {
+    const prevPosts = posts;
+    setPosts((prev) => prev.filter((post) => post._id !== postId));
+    try {
+      await deletePost(postId);
+      toast.success("Post deleted");
+    } catch {
+      toast.error("Couldn't delete this post.");
+      setPosts(prevPosts);
+    }
+  };
 
-                setPosts(res.data.posts)
+  return (
+    <div>
+      <div className="mb-6 flex items-center justify-between">
+        <h1 className="text-2xl font-semibold text-slate-100">Feed</h1>
+        <Button onClick={() => setIsModalOpen(true)}>+ New post</Button>
+      </div>
 
-            })
+      {isLoading ? (
+        <div className="flex justify-center py-20">
+          <Loader />
+        </div>
+      ) : !posts.length ? (
+        <div className="card p-10 text-center">
+          <p className="text-sm text-muted">
+            Nothing here yet. Be the first to share something with your community.
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-5">
+          {posts.map((post) => (
+            <PostCard key={post._id} post={post} onDelete={handleDelete} />
+          ))}
+        </div>
+      )}
 
-    }, [])
-
-
-    return (
-
-        <section className="min-h-screen bg-[#0a0a0a] py-8">
-            <div className="w-full max-w-[320px] md:max-w-[450px]  mx-auto space-y-6 px-2 md:px-4">
-
-                {posts.length > 0 ? (
-                    posts.map((post) => (
-                        <div
-                            key={post._id}
-                            className="bg-zinc-900/80 backdrop-blur-md border border-zinc-800 rounded-3xl overflow-hidden shadow-xl hover:border-zinc-700 hover:scale-[1.01] transition-all duration-300"
-                        >
-                            {/* Image */}
-                            <div className="overflow-hidden">
-                                <img
-                                    src={post.image}
-                                    alt={post.caption}
-                                    className=" w-full max-h-[600px] object-cover hover:scale-105 transition-transform duration-700"
-                                />
-                            </div>
-
-                            {/* Content */}
-                            <div className="p-5">
-                                <p className="text-zinc-200 text-sm leading-relaxed">
-                                    {post.caption}
-                                </p>
-                            </div>
-                        </div>
-                    ))
-                ) : (
-                    <div className="text-center py-20">
-                        <h1 className="text-zinc-500 text-xl">
-                            No posts available
-                        </h1>
-                    </div>
-                )}
-
-            </div>
-        </section>
-
-    )
+      <CreatePostModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSubmit={handleCreatePost}
+        isSubmitting={isSubmitting}
+      />
+    </div>
+  );
 }
-
-export default Feed
