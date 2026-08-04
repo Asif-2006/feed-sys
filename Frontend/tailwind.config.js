@@ -42,11 +42,21 @@ export default {
           "0%, 100%": { transform: "translateY(0)" },
           "50%": { transform: "translateY(-12px)" },
         },
+        slideInLeft: {
+          "0%": { opacity: "0", transform: "translateX(-24px)" },
+          "100%": { opacity: "1", transform: "translateX(0)" },
+        },
+        slideInRight: {
+          "0%": { opacity: "0", transform: "translateX(24px)" },
+          "100%": { opacity: "1", transform: "translateX(0)" },
+        },
       },
       animation: {
         "fade-in-up": "fadeInUp 0.7s ease-out both",
         blob: "blobMove 12s ease-in-out infinite",
         float: "floatY 5s ease-in-out infinite",
+        "slide-in-left": "slideInLeft 0.6s cubic-bezier(0.2,0.8,0.2,1) both",
+        "slide-in-right": "slideInRight 0.6s cubic-bezier(0.2,0.8,0.2,1) both",
       },
     },
   },

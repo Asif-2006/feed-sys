@@ -52,6 +52,22 @@ Clicking the HexiNova logo/name always goes to `/` (the public intro page). Afte
 login, users are redirected to `/feed`; the navbar also has a persistent "Feed" link once
 authenticated.
 
+### About the Home page
+
+`pages/Home.jsx` makes **zero API calls** — it's pure decorative/marketing content (animated
+headline, feature cards, a fake preview card with a looping typing effect). It's built with a
+single imperative `useEffect` that wires up the 3D scene tilt, cursor-reactive letter
+distortion, magnetic buttons, and scroll-triggered reveals, with a full cleanup function so it
+behaves correctly under React StrictMode's dev-only double-invoke. All cursor/tilt/particle
+effects are gated behind a `pointer: coarse` check and degrade to a simple, clean layout on
+touch devices. Its styles live in `pages/Home.css`, scoped entirely under a `.home-page`
+ancestor class so nothing leaks onto other routes.
+
+The navbar (`components/Navbar/Navbar.jsx`) has its own small set of micro-interactions —
+entrance slide-in, a coin-flip on the logo, a scroll-triggered background/shadow change, and a
+centered-underline hover on nav links — layered on top of its real auth-aware logic (Log
+in/Sign up vs. Feed/Admin/Logout).
+
 ## Known gap (flagged with a `TODO` in code)
 
 Your contract doesn't include a "list users" endpoint (e.g. `GET /admin/users`). Because of
