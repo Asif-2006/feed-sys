@@ -3,84 +3,45 @@
 @tailwind utilities;
 
 @layer base {
-  html {
-    scroll-behavior: smooth;
-    overflow-x: hidden;
-    /* hide the native scrollbar while keeping scroll functional */
-    -ms-overflow-style: none;
-    scrollbar-width: none;
+  :root {
+    color-scheme: dark;
   }
-  html::-webkit-scrollbar {
-    width: 0;
-    height: 0;
-    display: none;
+
+  * {
+    box-sizing: border-box;
   }
 
   body {
-    @apply bg-base text-slate-100 font-sans antialiased;
+    @apply bg-background text-slate-100 font-sans antialiased min-h-screen selection:bg-primary/30 selection:text-white;
     overflow-x: hidden;
   }
 
-  :focus-visible {
-    outline: 2px solid #3b82f6;
-    outline-offset: 2px;
+  /* Thin, elegant dark scrollbars */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: #090d16;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #1f293d;
+    border-radius: 9999px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #2d3a54;
   }
 }
 
 @layer components {
   .card {
-    @apply bg-surface border border-border rounded-xl2 shadow-lg shadow-black/20;
+    @apply bg-surface border border-border rounded-xl shadow-lg shadow-black/20;
   }
 
-  .scrollbar-thin::-webkit-scrollbar {
-    width: 6px;
+  .card-interactive {
+    @apply card transition-colors duration-150 hover:border-border-light;
   }
-  .scrollbar-thin::-webkit-scrollbar-thumb {
-    @apply bg-border rounded-full;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
-  }
-}
-
-/* ---------- Shared magnetic-button interaction (Navbar + Home) ---------- */
-.hx-btn-arrow {
-  display: inline-block;
-  transition: transform 220ms cubic-bezier(0.3, 1.5, 0.5, 1);
-}
-[data-magnetic]:hover .hx-btn-arrow {
-  transform: translateX(4px);
-}
-
-.hx-ripple {
-  position: absolute;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.5);
-  transform: scale(0);
-  animation: hx-rippleAnim 600ms ease-out;
-  pointer-events: none;
-}
-@keyframes hx-rippleAnim {
-  to { transform: scale(3.5); opacity: 0; }
-}
-
-.hx-spark {
-  position: fixed;
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  pointer-events: none;
-  z-index: 95;
-  animation: hx-sparkFly 550ms cubic-bezier(0.2, 0.8, 0.3, 1) forwards;
-}
-@keyframes hx-sparkFly {
-  to { transform: translate(var(--hx-sx), var(--hx-sy)) scale(0); opacity: 0; }
 }

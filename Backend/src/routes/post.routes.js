@@ -48,5 +48,13 @@ router.put("/:id", authUser, postController.updatePost);
 router.delete("/:id", authUser, postController.deletePost);
 
 
+/**
+ * - Toggle Like on a Post
+ */
+
+router.post("/:id/like", authUser, postController.toggleLikePost);
+router.patch("/:id/like", authUser, postController.toggleLikePost);
+
+
 
 module.exports = router;

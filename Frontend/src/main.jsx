@@ -4,6 +4,7 @@ import { BrowserRouter } from "react-router-dom";
 import App from "./App.jsx";
 import { AuthProvider } from "./context/AuthContext.jsx";
 import { ToastProvider } from "./context/ToastContext.jsx";
+import { PostUploadProvider } from "./context/PostUploadContext.jsx";
 import "./index.css";
 
 createRoot(document.getElementById("root")).render(
@@ -11,7 +12,9 @@ createRoot(document.getElementById("root")).render(
     <BrowserRouter>
       <ToastProvider>
         <AuthProvider>
-          <App />
+          <PostUploadProvider>
+            <App />
+          </PostUploadProvider>
         </AuthProvider>
       </ToastProvider>
     </BrowserRouter>

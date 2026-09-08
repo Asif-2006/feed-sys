@@ -1,95 +1,151 @@
-import { useEffect, useState } from "react";
-import Button from "../components/Button/Button";
-import PostCard from "../components/PostCard/PostCard";
-import CreatePostModal from "../components/CreatePostModal/CreatePostModal";
-import Loader from "../components/Loader/Loader";
-import { createPost, deletePost, getPosts } from "../api/post.api";
+import { useCallback, useEffect, useState } from "react";
+import Button from "../components/common/Button";
+import Loader from "../components/common/Loader";
+import PostCard from "../components/feed/PostCard";
+import CreatePostModal from "../components/feed/CreatePostModal";
+import EditPostModal from "../components/feed/EditPostModal";
+import { deletePost, getPosts, updatePost } from "../api/post.api";
 import { useToast } from "../hooks/useToast";
+import { usePostUpload } from "../hooks/usePostUpload";
 
 export default function Feed() {
   const toast = useToast();
+  const { subscribeOnPostCreated } = usePostUpload();
   const [posts, setPosts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [editingPost, setEditingPost] = useState(null);
+  const [isSubmittingEdit, setIsSubmittingEdit] = useState(false);
 
-  const loadPosts = async () => {
-    setIsLoading(true);
+  const fetchPosts = useCallback(async (showLoader = true) => {
+    if (showLoader) setIsLoading(true);
     try {
       const { data } = await getPosts();
-      setPosts(data?.posts ?? []);
-    } catch {
-      toast.error("Couldn't load the feed. Please try again.");
+      setPosts(data?.posts || []);
+    } catch (err) {
+      const message = err?.response?.data?.message || "Failed to load feed.";
+      toast.error(message);
     } finally {
-      setIsLoading(false);
+      if (showLoader) setIsLoading(false);
     }
-  };
+  }, [toast]);
 
   useEffect(() => {
-    loadPosts();
-  }, []);
+    fetchPosts(true);
+  }, [fetchPosts]);
 
-  const handleCreatePost = async ({ caption, image }) => {
-    setIsSubmitting(true);
+  // Listen for background uploads completing to update feed instantly
+  useEffect(() => {
+    const unsubscribe = subscribeOnPostCreated(() => {
+      fetchPosts(false);
+    });
+    return unsubscribe;
+  }, [subscribeOnPostCreated, fetchPosts]);
+
+  const handleUpdatePost = async (postId, data) => {
+    setIsSubmittingEdit(true);
     try {
-      const formData = new FormData();
-      formData.append("caption", caption);
-      if (image) formData.append("image", image);
-      await createPost(formData);
-      setIsModalOpen(false);
-      toast.success("Post published");
-      // Re-fetch rather than assuming the response shape of a single
-      // created post, since only GET /posts' shape was documented.
-      loadPosts();
+      const res = await updatePost(postId, data);
+      toast.success("Post updated!");
+      setPosts((prev) =>
+        prev.map((p) => (p._id === postId ? { ...p, caption: res.data.post.caption } : p))
+      );
+      setEditingPost(null);
+      return true;
     } catch (err) {
-      toast.error(err?.response?.data?.message || "Couldn't publish this post.");
+      toast.error(err?.response?.data?.message || "Failed to update post.");
+      return false;
     } finally {
-      setIsSubmitting(false);
+      setIsSubmittingEdit(false);
     }
   };
 
-  const handleDelete = async (postId) => {
-    const prevPosts = posts;
-    setPosts((prev) => prev.filter((post) => post._id !== postId));
+  const handleDeletePost = async (postId) => {
     try {
       await deletePost(postId);
-      toast.success("Post deleted");
-    } catch {
-      toast.error("Couldn't delete this post.");
-      setPosts(prevPosts);
+      toast.success("Post deleted.");
+      setPosts((prev) => prev.filter((p) => p._id !== postId));
+    } catch (err) {
+      toast.error(err?.response?.data?.message || "Failed to delete post.");
     }
   };
 
   return (
-    <div>
-      <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-slate-100">Feed</h1>
-        <Button onClick={() => setIsModalOpen(true)}>+ New post</Button>
+    <div className="max-w-xl mx-auto space-y-6">
+      {/* Header bar */}
+      <div className="flex items-center justify-between gap-4 pb-2 border-b border-border">
+        <div>
+          <h1 className="text-xl font-bold text-slate-100">Community Feed</h1>
+          <p className="text-xs text-muted mt-0.5">Live updates and shared moments</p>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => fetchPosts(false)}
+            title="Refresh feed"
+          >
+            ↻ Refresh
+          </Button>
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={() => setIsCreateModalOpen(true)}
+          >
+            + New Post
+          </Button>
+        </div>
       </div>
 
+      {/* Feed Content */}
       {isLoading ? (
-        <div className="flex justify-center py-20">
-          <Loader />
+        <div className="flex flex-col items-center justify-center py-20 gap-3">
+          <Loader size="lg" />
+          <p className="text-xs text-muted">Loading latest posts...</p>
         </div>
       ) : !posts.length ? (
-        <div className="card p-10 text-center">
-          <p className="text-sm text-muted">
-            Nothing here yet. Be the first to share something with your community.
+        <div className="card p-12 text-center flex flex-col items-center">
+          <span className="text-4xl mb-3">🖼️</span>
+          <h3 className="text-base font-semibold text-slate-100">No posts yet</h3>
+          <p className="text-xs text-muted mt-1 max-w-xs">
+            Be the first to share an image with the community.
           </p>
+          <Button
+            variant="primary"
+            size="sm"
+            className="mt-4"
+            onClick={() => setIsCreateModalOpen(true)}
+          >
+            Create First Post
+          </Button>
         </div>
       ) : (
-        <div className="space-y-5">
+        <div className="space-y-4">
           {posts.map((post) => (
-            <PostCard key={post._id} post={post} onDelete={handleDelete} />
+            <PostCard
+              key={post._id}
+              post={post}
+              onDelete={handleDeletePost}
+              onEdit={(p) => setEditingPost(p)}
+            />
           ))}
         </div>
       )}
 
+      {/* Create Modal */}
       <CreatePostModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSubmit={handleCreatePost}
-        isSubmitting={isSubmitting}
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+      />
+
+      {/* Edit Modal */}
+      <EditPostModal
+        isOpen={Boolean(editingPost)}
+        onClose={() => setEditingPost(null)}
+        post={editingPost}
+        onSubmit={handleUpdatePost}
+        isSubmitting={isSubmittingEdit}
       />
     </div>
   );

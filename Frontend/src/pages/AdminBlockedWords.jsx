@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import BlockedWordTable from "../components/BlockedWordTable/BlockedWordTable";
+import BlockedWordTable from "../components/admin/BlockedWordTable";
 import { addBlockedWord, deleteBlockedWord, getBlockedWords } from "../api/admin.api";
 import { useToast } from "../hooks/useToast";
 
@@ -10,54 +10,56 @@ export default function AdminBlockedWords() {
   const [isAdding, setIsAdding] = useState(false);
 
   useEffect(() => {
-    getBlockedWords()
-      .then(({ data }) => setWords(data?.words ?? data ?? []))
-      .catch(() => toast.error("Couldn't load blocked words."))
-      .finally(() => setIsLoading(false));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    fetchBlockedWords();
   }, []);
 
-  const handleAdd = async (word) => {
+  const fetchBlockedWords = async () => {
+    setIsLoading(true);
+    try {
+      const { data } = await getBlockedWords();
+      setWords(Array.isArray(data) ? data : data?.words || []);
+    } catch {
+      toast.error("Failed to load blocked words list.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleAddWord = async ({ word, category, severity }) => {
     setIsAdding(true);
     try {
-      const { data } = await addBlockedWord(word);
-      const created = data?.word ?? data ?? { _id: crypto.randomUUID(), word };
+      const { data } = await addBlockedWord({ word, category, severity });
+      const created = data?.blockedWord || data?.word || data;
       setWords((prev) => [...prev, created]);
-      toast.success(`Added "${word}" to blocked words`);
+      toast.success(`Word "${word}" added to moderation filter`);
     } catch (err) {
-      toast.error(err?.response?.data?.message || "Couldn't add this word.");
+      toast.error(err?.response?.data?.message || "Could not add blocked word.");
     } finally {
       setIsAdding(false);
     }
   };
 
-  const handleRemove = async (wordId) => {
-    const prevWords = words;
+  const handleRemoveWord = async (wordId) => {
+    const previous = words;
     setWords((prev) => prev.filter((w) => w._id !== wordId));
     try {
       await deleteBlockedWord(wordId);
-    } catch {
-      toast.error("Couldn't remove this word.");
-      setWords(prevWords);
+      toast.success("Blocked word removed");
+    } catch (err) {
+      toast.error(err?.response?.data?.message || "Failed to remove word.");
+      setWords(previous);
     }
   };
 
   return (
-    <div>
-      <h1 className="mb-2 text-2xl font-semibold text-slate-100">Blocked Words</h1>
-      <p className="mb-6 text-sm text-muted">
-        Manage the list of words filtered by the moderation service.
-      </p>
-
-      <div className="card p-6">
-        <BlockedWordTable
-          words={words}
-          isLoading={isLoading}
-          isAdding={isAdding}
-          onAdd={handleAdd}
-          onRemove={handleRemove}
-        />
-      </div>
+    <div className="space-y-4">
+      <BlockedWordTable
+        words={words}
+        isLoading={isLoading}
+        isAdding={isAdding}
+        onAdd={handleAddWord}
+        onRemove={handleRemoveWord}
+      />
     </div>
   );
 }

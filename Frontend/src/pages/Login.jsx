@@ -1,38 +1,51 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import Input from "../components/Input/Input";
-import Button from "../components/Button/Button";
+import Input from "../components/common/Input";
+import Button from "../components/common/Button";
 import { useAuth } from "../hooks/useAuth";
 import { useToast } from "../hooks/useToast";
-import { isValidEmail } from "../utils/helpers";
 
 export default function Login() {
   const { login } = useAuth();
   const toast = useToast();
   const navigate = useNavigate();
   const location = useLocation();
-  const [form, setForm] = useState({ email: "", password: "" });
+
+  const [form, setForm] = useState({ identifier: "", password: "" });
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const validate = () => {
-    const next = {};
-    if (!isValidEmail(form.email)) next.email = "Enter a valid email address.";
-    if (!form.password) next.password = "Password is required.";
-    setErrors(next);
-    return Object.keys(next).length === 0;
+    const errs = {};
+    if (!form.identifier.trim()) {
+      errs.identifier = "Email or username is required.";
+    }
+    if (!form.password) {
+      errs.password = "Password is required.";
+    }
+    setErrors(errs);
+    return Object.keys(errs).length === 0;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validate()) return;
+
     setIsSubmitting(true);
     try {
-      await login(form);
+      const isEmail = form.identifier.includes("@");
+      const credentials = isEmail
+        ? { email: form.identifier.trim(), password: form.password }
+        : { username: form.identifier.trim(), password: form.password };
+
+      await login(credentials);
       toast.success("Welcome back!");
-      navigate(location.state?.from?.pathname || "/feed", { replace: true });
+      const target = location.state?.from?.pathname || "/feed";
+      navigate(target, { replace: true });
     } catch (err) {
-      toast.error(err?.response?.data?.message || "Invalid email or password.");
+      const message =
+        err?.response?.data?.message || "Invalid credentials. Please try again.";
+      toast.error(message);
     } finally {
       setIsSubmitting(false);
     }
@@ -40,20 +53,28 @@ export default function Login() {
 
   return (
     <div className="flex min-h-[70vh] items-center justify-center py-10">
-      <div className="card w-full max-w-md p-8">
-        <h1 className="text-2xl font-semibold text-slate-100">Welcome back</h1>
-        <p className="mt-1 text-sm text-muted">Log in to continue to HexiNova.</p>
+      <div className="card w-full max-w-md p-6 sm:p-8">
+        <div className="mb-6 text-center">
+          <h1 className="text-2xl font-bold text-slate-100">Welcome Back</h1>
+          <p className="text-xs sm:text-sm text-muted mt-1">
+            Log in to your account to view and share feed posts
+          </p>
+        </div>
 
-        <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <Input
-            label="Email"
-            name="email"
-            type="email"
-            placeholder="you@example.com"
-            value={form.email}
-            error={errors.email}
-            onChange={(e) => setForm((prev) => ({ ...prev, email: e.target.value }))}
+            label="Email or Username"
+            name="identifier"
+            type="text"
+            placeholder="you@example.com or username"
+            value={form.identifier}
+            error={errors.identifier}
+            onChange={(e) =>
+              setForm((prev) => ({ ...prev, identifier: e.target.value }))
+            }
+            autoFocus
           />
+
           <Input
             label="Password"
             name="password"
@@ -61,17 +82,28 @@ export default function Login() {
             placeholder="••••••••"
             value={form.password}
             error={errors.password}
-            onChange={(e) => setForm((prev) => ({ ...prev, password: e.target.value }))}
+            onChange={(e) =>
+              setForm((prev) => ({ ...prev, password: e.target.value }))
+            }
           />
-          <Button type="submit" className="w-full" isLoading={isSubmitting}>
-            Log in
+
+          <Button
+            type="submit"
+            variant="primary"
+            className="w-full mt-2"
+            isLoading={isSubmitting}
+          >
+            Sign in
           </Button>
         </form>
 
-        <p className="mt-6 text-center text-sm text-muted">
+        <p className="mt-6 text-center text-xs sm:text-sm text-muted">
           Don't have an account?{" "}
-          <Link to="/register" className="font-medium text-primary hover:text-primary-hover">
-            Sign up
+          <Link
+            to="/register"
+            className="font-semibold text-primary hover:text-primary-hover transition-colors"
+          >
+            Create one
           </Link>
         </p>
       </div>

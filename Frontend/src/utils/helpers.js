@@ -4,6 +4,9 @@ export function formatRelativeTime(dateString) {
   const date = new Date(dateString);
   const seconds = Math.floor((now - date) / 1000);
 
+  if (seconds < 30) return "just now";
+  if (seconds < 60) return `${seconds}s ago`;
+
   const intervals = [
     { label: "y", secs: 31536000 },
     { label: "mo", secs: 2592000 },
@@ -14,12 +17,15 @@ export function formatRelativeTime(dateString) {
 
   for (const interval of intervals) {
     const count = Math.floor(seconds / interval.secs);
-    if (count >= 1) return `${count}${interval.label} ago`;
+    if (count >= 1) {
+      return `${count}${interval.label} ago`;
+    }
   }
   return "just now";
 }
 
 export function getInitials(name = "") {
+  if (!name) return "U";
   return name
     .trim()
     .split(" ")
@@ -34,12 +40,16 @@ export function classNames(...classes) {
 }
 
 export function isValidEmail(email = "") {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
 }
 
-// Per the post model: author display name is fullName, falling back to
-// username when fullName is empty.
 export function getAuthorDisplayName(author) {
-  if (!author) return "Unknown";
-  return author.fullName?.trim() ? author.fullName : author.username;
+  if (!author) return "Anonymous";
+  if (typeof author === "string") return author;
+  return author.fullName?.trim() ? author.fullName : (author.username || "Anonymous");
+}
+
+export function getUserId(user) {
+  if (!user) return null;
+  return user._id || user.id || null;
 }

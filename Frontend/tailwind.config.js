@@ -1,62 +1,75 @@
 /** @type {import('tailwindcss').Config} */
 export default {
   content: ["./index.html", "./src/**/*.{js,jsx}"],
+  darkMode: "class",
   theme: {
     extend: {
       colors: {
-        base: "#0F172A",
-        surface: "#1E293B",
+        background: "#090d16",
+        surface: {
+          DEFAULT: "#111827",
+          hover: "#172033",
+          active: "#1e293b",
+        },
+        border: {
+          DEFAULT: "#1f293d",
+          light: "#2d3a54",
+        },
         primary: {
-          DEFAULT: "#3B82F6",
-          hover: "#2563EB",
+          DEFAULT: "#3b82f6",
+          hover: "#2563eb",
+          light: "rgba(59, 130, 246, 0.12)",
         },
-        accent: "#06B6D4",
-        success: "#22C55E",
+        accent: {
+          DEFAULT: "#06b6d4",
+          hover: "#0891b2",
+          light: "rgba(6, 182, 212, 0.12)",
+        },
         danger: {
-          DEFAULT: "#EF4444",
-          hover: "#DC2626",
+          DEFAULT: "#ef4444",
+          hover: "#dc2626",
+          light: "rgba(239, 68, 68, 0.12)",
         },
-        border: "#334155",
-        muted: "#94A3B8",
+        success: {
+          DEFAULT: "#10b981",
+          hover: "#059669",
+          light: "rgba(16, 185, 129, 0.12)",
+        },
+        warning: {
+          DEFAULT: "#f59e0b",
+          hover: "#d97706",
+          light: "rgba(245, 158, 11, 0.12)",
+        },
+        muted: "#94a3b8",
       },
       fontFamily: {
-        sans: ["Inter", "sans-serif"],
-      },
-      borderRadius: {
-        xl2: "1rem",
-      },
-      transitionDuration: {
-        DEFAULT: "150ms",
-      },
-      keyframes: {
-        fadeInUp: {
-          "0%": { opacity: "0", transform: "translateY(16px)" },
-          "100%": { opacity: "1", transform: "translateY(0)" },
-        },
-        blobMove: {
-          "0%, 100%": { transform: "translate(0, 0) scale(1)" },
-          "33%": { transform: "translate(30px, -40px) scale(1.1)" },
-          "66%": { transform: "translate(-20px, 20px) scale(0.95)" },
-        },
-        floatY: {
-          "0%, 100%": { transform: "translateY(0)" },
-          "50%": { transform: "translateY(-12px)" },
-        },
-        slideInLeft: {
-          "0%": { opacity: "0", transform: "translateX(-24px)" },
-          "100%": { opacity: "1", transform: "translateX(0)" },
-        },
-        slideInRight: {
-          "0%": { opacity: "0", transform: "translateX(24px)" },
-          "100%": { opacity: "1", transform: "translateX(0)" },
-        },
+        sans: [
+          "Inter",
+          "-apple-system",
+          "BlinkMacSystemFont",
+          "Segoe UI",
+          "Roboto",
+          "sans-serif",
+        ],
       },
       animation: {
-        "fade-in-up": "fadeInUp 0.7s ease-out both",
-        blob: "blobMove 12s ease-in-out infinite",
-        float: "floatY 5s ease-in-out infinite",
-        "slide-in-left": "slideInLeft 0.6s cubic-bezier(0.2,0.8,0.2,1) both",
-        "slide-in-right": "slideInRight 0.6s cubic-bezier(0.2,0.8,0.2,1) both",
+        "fade-in": "fadeIn 0.2s ease-out forwards",
+        "scale-in": "scaleIn 0.2s ease-out forwards",
+        "slide-down": "slideDown 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards",
+      },
+      keyframes: {
+        fadeIn: {
+          "0%": { opacity: "0" },
+          "100%": { opacity: "1" },
+        },
+        scaleIn: {
+          "0%": { opacity: "0", transform: "scale(0.96)" },
+          "100%": { opacity: "1", transform: "scale(1)" },
+        },
+        slideDown: {
+          "0%": { opacity: "0", transform: "translateY(-10px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
+        },
       },
     },
   },

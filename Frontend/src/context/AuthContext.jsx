@@ -1,5 +1,6 @@
 import { createContext, useCallback, useEffect, useState } from "react";
 import { getCurrentUser, loginUser, logoutUser, registerUser } from "../api/auth.api";
+import { ROLES } from "../utils/constants";
 
 export const AuthContext = createContext(null);
 
@@ -10,7 +11,7 @@ export function AuthProvider({ children }) {
   const fetchCurrentUser = useCallback(async () => {
     try {
       const { data } = await getCurrentUser();
-      setUser(data?.user ?? null);
+      setUser(data?.user || null);
     } catch {
       setUser(null);
     } finally {
@@ -23,14 +24,13 @@ export function AuthProvider({ children }) {
   }, [fetchCurrentUser]);
 
   const login = async (credentials) => {
-    await loginUser(credentials);
-    // Login sets an httpOnly cookie only; fetch the session user separately.
+    const { data } = await loginUser(credentials);
+    // Refresh full user document from /me to have consistent object structure
     await fetchCurrentUser();
+    return data;
   };
 
   const register = async (details) => {
-    // POST /auth/register only returns { message }; it does not log the
-    // user in. Caller is expected to redirect to /login afterwards.
     const { data } = await registerUser(details);
     return data;
   };
@@ -47,11 +47,11 @@ export function AuthProvider({ children }) {
     user,
     isLoading,
     isAuthenticated: Boolean(user),
-    isAdmin: user?.role === "admin",
+    isAdmin: user?.role === ROLES.ADMIN,
     login,
     register,
     logout,
-    refresh: fetchCurrentUser,
+    refreshUser: fetchCurrentUser,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

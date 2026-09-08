@@ -190,11 +190,8 @@ async function updatePost(req, res) {
             });
         }
 
-        // Authorization
-        if (
-            post.author.toString() !== req.user.id &&
-            req.user.role !== "admin"
-        ) {
+        // Authorization: Only the author can edit their own post
+        if (post.author.toString() !== req.user.id) {
             return res.status(403).json({
                 message: "You are not authorized to update this post"
             });
@@ -256,19 +253,58 @@ async function deletePost(req, res) {
     }
 }
 
+async function toggleLikePost(req, res) {
+    try {
+        const { id } = req.params;
+        const userId = req.user.id;
 
+        const post = await PostModel.findById(id);
 
+        if (!post) {
+            return res.status(404).json({
+                message: "Post not found"
+            });
+        }
 
+        if (!Array.isArray(post.likes)) {
+            post.likes = [];
+        }
 
+        const isLiked = post.likes.some(
+            (likeUserId) => likeUserId.toString() === userId
+        );
 
+        if (isLiked) {
+            post.likes = post.likes.filter(
+                (likeUserId) => likeUserId.toString() !== userId
+            );
+        } else {
+            post.likes.push(userId);
+        }
 
+        await post.save();
 
+        return res.status(200).json({
+            message: isLiked ? "Post unliked" : "Post liked",
+            likes: post.likes,
+            likesCount: post.likes.length,
+            isLiked: !isLiked
+        });
 
+    } catch (err) {
+        console.error(err);
+
+        return res.status(500).json({
+            message: "Internal Server Error"
+        });
+    }
+}
 
 module.exports = {
     createPost,
     getAllPosts,
     getPostById,
     updatePost,
-    deletePost
+    deletePost,
+    toggleLikePost
 };
