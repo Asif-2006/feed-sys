@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import Button from "../components/common/Button";
 import { useAuth } from "../hooks/useAuth";
@@ -59,6 +59,35 @@ export default function Home() {
   const [demoLikeCount, setDemoLikeCount] = useState(42);
   const [demoHeartPop, setDemoHeartPop] = useState(false);
 
+  // 3D Parallax Tilt State
+  const cardRef = useRef(null);
+  const [tilt, setTilt] = useState({ rotateX: 0, rotateY: 0, glareX: 50, glareY: 50 });
+  const [isHoveringCard, setIsHoveringCard] = useState(false);
+
+  const handleCardMouseMove = (e) => {
+    if (!cardRef.current) return;
+    const rect = cardRef.current.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width;
+    const y = (e.clientY - rect.top) / rect.height;
+    const rotateX = Number(((y - 0.5) * -18).toFixed(2));
+    const rotateY = Number(((x - 0.5) * 18).toFixed(2));
+    setTilt({
+      rotateX,
+      rotateY,
+      glareX: Number((x * 100).toFixed(1)),
+      glareY: Number((y * 100).toFixed(1)),
+    });
+  };
+
+  const handleCardMouseEnter = () => {
+    setIsHoveringCard(true);
+  };
+
+  const handleCardMouseLeave = () => {
+    setIsHoveringCard(false);
+    setTilt({ rotateX: 0, rotateY: 0, glareX: 50, glareY: 50 });
+  };
+
   const toggleDemoLike = () => {
     setDemoLiked((prev) => {
       const next = !prev;
@@ -88,7 +117,7 @@ export default function Home() {
       />
 
       {/* Hero Badge with Glowing Beacon */}
-      <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary/40 bg-surface/80 px-4 py-1.5 text-xs font-semibold text-slate-200 backdrop-blur-md shadow-[0_0_20px_rgba(59,130,246,0.25)] hover:border-primary transition-colors">
+      <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary/40 bg-surface/80 px-4 py-1.5 text-xs font-semibold text-slate-200 backdrop-blur-md shadow-[0_0_20px_rgba(59,130,246,0.25)] hover:border-primary transition-all duration-300 hover:scale-105">
         <span className="relative flex h-2 w-2">
           <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
           <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
@@ -122,7 +151,7 @@ export default function Home() {
             <Button
               size="lg"
               variant="primary"
-              className="text-base px-7 py-3.5 shadow-[0_0_25px_rgba(59,130,246,0.5)] hover:shadow-[0_0_35px_rgba(59,130,246,0.7)] font-bold"
+              className="text-base px-7 py-3.5 shadow-[0_0_25px_rgba(59,130,246,0.5)] hover:shadow-[0_0_35px_rgba(59,130,246,0.7)] font-bold transition-all duration-300 hover:scale-105"
             >
               Open Your Feed ⚡
             </Button>
@@ -133,7 +162,7 @@ export default function Home() {
               <Button
                 size="lg"
                 variant="primary"
-                className="text-base px-7 py-3.5 shadow-[0_0_25px_rgba(59,130,246,0.5)] hover:shadow-[0_0_35px_rgba(59,130,246,0.7)] font-bold group"
+                className="text-base px-7 py-3.5 shadow-[0_0_25px_rgba(59,130,246,0.5)] hover:shadow-[0_0_35px_rgba(59,130,246,0.7)] font-bold group transition-all duration-300 hover:scale-105"
               >
                 <span>Get Started Free</span>
                 <span className="group-hover:translate-x-1 transition-transform">→</span>
@@ -143,7 +172,7 @@ export default function Home() {
               <Button
                 size="lg"
                 variant="secondary"
-                className="text-base px-6 py-3.5 border-border-light hover:border-slate-400 font-semibold"
+                className="text-base px-6 py-3.5 border-border-light hover:border-slate-400 font-semibold transition-all duration-300 hover:scale-105"
               >
                 Sign In to Feed
               </Button>
@@ -152,24 +181,68 @@ export default function Home() {
         )}
       </div>
 
-      {/* Live Interactive Post Mockup Stage */}
-      <div className="mt-16 w-full max-w-2xl relative">
+      {/* 3D Holographic Interactive Post Stage */}
+      <div
+        className="mt-16 w-full max-w-2xl relative"
+        style={{ perspective: "1200px" }}
+      >
         {/* Glow ambient halo */}
-        <div className="absolute -inset-1 bg-gradient-to-r from-primary via-accent to-violet-600 rounded-2xl blur-xl opacity-30 group-hover:opacity-60 transition duration-500" />
+        <div className="absolute -inset-1 bg-gradient-to-r from-primary via-accent to-violet-600 rounded-2xl blur-2xl opacity-35 transition duration-500" />
 
-        {/* Floating Badges */}
-        <div className="absolute -top-4 -left-3 sm:-left-6 z-20 hidden sm:flex items-center gap-2 rounded-full border border-emerald-500/40 bg-surface/90 px-3 py-1.5 text-xs font-semibold text-emerald-300 shadow-xl backdrop-blur-md animate-bounce">
-          <span>🛡️</span> AI Vision Verified Safe
+        {/* Floating 3D Depth Badges */}
+        <div
+          className="absolute -top-4 -left-3 sm:-left-6 z-30 hidden sm:flex items-center gap-2 rounded-full border border-emerald-500/50 bg-surface/90 px-3.5 py-1.5 text-xs font-semibold text-emerald-300 shadow-2xl backdrop-blur-md transition-transform duration-300"
+          style={{
+            transform: isHoveringCard
+              ? `translate3d(-8px, -8px, 60px) rotateX(${tilt.rotateX}deg) rotateY(${tilt.rotateY}deg)`
+              : "translate3d(0, 0, 40px)",
+          }}
+        >
+          <span className="animate-pulse">🛡️</span> AI Vision Verified Safe
         </div>
 
-        <div className="absolute -bottom-4 -right-3 sm:-right-6 z-20 hidden sm:flex items-center gap-2 rounded-full border border-cyan-500/40 bg-surface/90 px-3 py-1.5 text-xs font-semibold text-cyan-300 shadow-xl backdrop-blur-md">
+        <div
+          className="absolute -bottom-4 -right-3 sm:-right-6 z-30 hidden sm:flex items-center gap-2 rounded-full border border-cyan-500/50 bg-surface/90 px-3.5 py-1.5 text-xs font-semibold text-cyan-300 shadow-2xl backdrop-blur-md transition-transform duration-300"
+          style={{
+            transform: isHoveringCard
+              ? `translate3d(8px, 8px, 60px) rotateX(${tilt.rotateX}deg) rotateY(${tilt.rotateY}deg)`
+              : "translate3d(0, 0, 40px)",
+          }}
+        >
           <span>⚡</span> WebP 80% Compressed
         </div>
 
-        {/* Mockup Card */}
-        <div className="relative card p-5 border-border-light bg-surface/90 backdrop-blur-xl shadow-2xl overflow-hidden">
-          {/* Card Header */}
-          <div className="flex items-center justify-between gap-3 mb-4">
+        {/* 3D Tilting Card */}
+        <div
+          ref={cardRef}
+          onMouseMove={handleCardMouseMove}
+          onMouseEnter={handleCardMouseEnter}
+          onMouseLeave={handleCardMouseLeave}
+          style={{
+            transformStyle: "preserve-3d",
+            transform: `rotateX(${tilt.rotateX}deg) rotateY(${tilt.rotateY}deg) ${
+              isHoveringCard ? "scale(1.02)" : "scale(1)"
+            }`,
+            transition: isHoveringCard
+              ? "transform 0.08s ease-out"
+              : "transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1)",
+          }}
+          className="relative card p-5 border-border-light bg-surface/90 backdrop-blur-2xl shadow-[0_25px_60px_rgba(0,0,0,0.6)] overflow-hidden"
+        >
+          {/* Dynamic 3D Cursor Glare Highlight */}
+          <div
+            className="absolute inset-0 pointer-events-none rounded-xl z-20 transition-opacity duration-300"
+            style={{
+              background: `radial-gradient(circle 350px at ${tilt.glareX}% ${tilt.glareY}%, rgba(255, 255, 255, 0.12), transparent 70%)`,
+              opacity: isHoveringCard ? 1 : 0,
+            }}
+          />
+
+          {/* Card Header (3D Layer) */}
+          <div
+            className="flex items-center justify-between gap-3 mb-4"
+            style={{ transform: "translateZ(30px)" }}
+          >
             <div className="flex items-center gap-3">
               <div className="h-10 w-10 rounded-full bg-gradient-to-tr from-primary to-accent flex items-center justify-center font-bold text-sm text-white shadow-md shadow-primary/30">
                 FS
@@ -177,19 +250,20 @@ export default function Home() {
               <div>
                 <div className="flex items-center gap-1.5">
                   <p className="text-sm font-bold text-slate-100">FeedSys Official</p>
-                  <span className="text-primary text-xs" title="Verified Badge">✓</span>
+                  <span className="text-primary text-xs font-bold" title="Verified Badge">✓</span>
                 </div>
                 <p className="text-xs text-muted">San Francisco, CA &bull; Just now</p>
               </div>
             </div>
 
-            <span className="text-xs px-2.5 py-1 rounded-full bg-primary-light text-primary font-semibold border border-primary/30">
-              Live Interactive Demo
+            <span className="text-xs px-2.5 py-1 rounded-full bg-primary-light text-primary font-semibold border border-primary/30 shadow-sm">
+              Live 3D Demo
             </span>
           </div>
 
-          {/* Interactive Mockup Image with Double Click Heart */}
+          {/* Interactive Mockup Image with Double Click Heart (3D Layer) */}
           <div
+            style={{ transform: "translateZ(20px)" }}
             className="relative w-full h-80 sm:h-96 rounded-xl overflow-hidden bg-gradient-to-b from-slate-900 via-slate-800 to-slate-950 flex items-center justify-center border border-border/60 cursor-pointer select-none group"
             onDoubleClick={toggleDemoLike}
           >
@@ -197,29 +271,32 @@ export default function Home() {
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_40%,rgba(6,182,212,0.25),transparent_70%)]" />
 
             <div className="text-center p-6 z-10 flex flex-col items-center">
-              <div className="w-20 h-20 rounded-2xl bg-gradient-to-tr from-blue-600 to-cyan-400 flex items-center justify-center text-4xl shadow-2xl shadow-cyan-500/30 mb-4 group-hover:scale-110 transition-transform duration-300">
+              <div className="w-20 h-20 rounded-2xl bg-gradient-to-tr from-blue-600 to-cyan-400 flex items-center justify-center text-4xl shadow-2xl shadow-cyan-500/40 mb-4 group-hover:scale-110 transition-transform duration-300">
                 📸
               </div>
               <h3 className="text-lg sm:text-xl font-extrabold text-slate-100">
                 Crystal Clear Social Timeline
               </h3>
               <p className="text-xs text-muted mt-1.5 max-w-sm">
-                Double click anywhere on this image to like, or tap the heart below!
+                Move your cursor to tilt in 3D &bull; Double click image to like!
               </p>
             </div>
 
             {/* Floating Heart Effect */}
             {demoHeartPop && (
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none animate-scale-in z-30">
-                <span className="text-7xl text-danger drop-shadow-[0_0_20px_rgba(239,68,68,0.8)] filter">
+                <span className="text-7xl text-danger drop-shadow-[0_0_25px_rgba(239,68,68,0.9)] filter">
                   ❤️
                 </span>
               </div>
             )}
           </div>
 
-          {/* Card Footer Interaction */}
-          <div className="mt-4 pt-3 flex items-center justify-between border-t border-border/60">
+          {/* Card Footer Interaction (3D Layer) */}
+          <div
+            className="mt-4 pt-3 flex items-center justify-between border-t border-border/60"
+            style={{ transform: "translateZ(25px)" }}
+          >
             <button
               onClick={toggleDemoLike}
               className={`flex items-center gap-2 text-sm font-semibold transition-transform duration-150 active:scale-90 ${
@@ -252,7 +329,7 @@ export default function Home() {
         {STATS.map((stat) => (
           <div
             key={stat.label}
-            className="card p-5 text-center bg-surface/70 border-border hover:border-primary/40 transition-colors"
+            className="card p-5 text-center bg-surface/70 border-border hover:border-primary/50 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-primary/10"
           >
             <p className="text-2xl sm:text-3xl font-black bg-gradient-to-r from-blue-400 to-cyan-300 bg-clip-text text-transparent font-mono">
               {stat.value}
@@ -280,7 +357,7 @@ export default function Home() {
           {BENTO_FEATURES.map((item) => (
             <div
               key={item.title}
-              className={`card p-6 bg-gradient-to-br ${item.gradient} bg-surface/80 border-border hover:border-border-light transition-all duration-300 hover:shadow-xl hover:shadow-primary/5 flex flex-col justify-between ${item.colSpan}`}
+              className={`card p-6 bg-gradient-to-br ${item.gradient} bg-surface/80 border-border hover:border-border-light transition-all duration-300 hover:shadow-2xl hover:shadow-primary/10 hover:translate-y-[-4px] flex flex-col justify-between ${item.colSpan}`}
             >
               <div>
                 <div className="flex items-center justify-between mb-4">
@@ -327,7 +404,7 @@ export default function Home() {
               <Button
                 size="lg"
                 variant="primary"
-                className="text-base px-8 py-3.5 font-bold shadow-[0_0_30px_rgba(59,130,246,0.6)]"
+                className="text-base px-8 py-3.5 font-bold shadow-[0_0_30px_rgba(59,130,246,0.6)] transition-all duration-300 hover:scale-105"
               >
                 {isAuthenticated ? "Launch Feed →" : "Create Account Now →"}
               </Button>
