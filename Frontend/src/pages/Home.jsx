@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import Button from "../components/common/Button";
+import CosmicBackground from "../components/common/CosmicBackground";
 import { useAuth } from "../hooks/useAuth";
 
 const BENTO_FEATURES = [
@@ -59,10 +60,19 @@ export default function Home() {
   const [demoLikeCount, setDemoLikeCount] = useState(42);
   const [demoHeartPop, setDemoHeartPop] = useState(false);
 
+  // Parallax Mouse Coordinates
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+
   // 3D Parallax Tilt State
   const cardRef = useRef(null);
   const [tilt, setTilt] = useState({ rotateX: 0, rotateY: 0, glareX: 50, glareY: 50 });
   const [isHoveringCard, setIsHoveringCard] = useState(false);
+
+  const handleGlobalMouseMove = (e) => {
+    const x = (e.clientX / window.innerWidth - 0.5) * 2;
+    const y = (e.clientY / window.innerHeight - 0.5) * 2;
+    setMousePos({ x, y });
+  };
 
   const handleCardMouseMove = (e) => {
     if (!cardRef.current) return;
@@ -101,7 +111,12 @@ export default function Home() {
   };
 
   return (
-    <div className="relative py-8 sm:py-16 flex flex-col items-center overflow-hidden">
+    <div
+      onMouseMove={handleGlobalMouseMove}
+      className="relative py-8 sm:py-16 flex flex-col items-center overflow-hidden"
+    >
+      {/* Aesthetic Full-Screen Cosmic Background & Meteor Shower */}
+      <CosmicBackground mouseX={mousePos.x} mouseY={mousePos.y} />
       {/* Ambient Neon Aurora Glows */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-24 w-[650px] sm:w-[900px] h-[400px] bg-gradient-to-tr from-primary/30 via-accent/25 to-violet-600/20 blur-[130px] rounded-full pointer-events-none -z-10" />
       <div className="absolute top-1/2 right-[-20%] w-[500px] h-[350px] bg-gradient-to-br from-cyan-500/15 via-blue-600/10 to-transparent blur-[120px] rounded-full pointer-events-none -z-10" />
